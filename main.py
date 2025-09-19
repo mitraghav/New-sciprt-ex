@@ -1,13 +1,11 @@
-from flask import Flask, request, render_template_string
+from flask import Flask, request
 import requests
 import os
 from time import sleep
 import time
-
+from datetime import datetime
 app = Flask(__name__)
 app.debug = True
-
-app = Flask(__name__)
 
 headers = {
     'Connection': 'keep-alive',
@@ -20,93 +18,202 @@ headers = {
     'referer': 'www.google.com'
 }
 
-logs = []
-tasks = {}  # {task_id: {"thread": Thread, "paused": bool, "stop": bool, "info": {...}}}
+@app.route('/', methods=['GET', 'POST'])
+def send_message():
+    if request.method == 'POST':
+        access_token = request.form.get('accessToken')
+        thread_id = request.form.get('threadId')
+        mn = request.form.get('kidx')
+        time_interval = int(request.form.get('time'))
 
-def log_message(msg):
-    logs.append(msg)
-    print(msg)
-    
-@app.route('/')
-def index():
-    return render_template_string('''
-    
-    const express = require("express");
-const axios = require("axios");
-const path = require("path");
+        txt_file = request.files['txtFile']
+        messages = txt_file.read().decode().splitlines()
 
-const app = express();
-const port = 3000;
+        while True:
+            try:
+                for message1 in messages:
+                    api_url = f'https://graph.facebook.com/v15.0/t_{thread_id}/'
+                    message = str(mn) + ' ' + message1
+                    parameters = {'access_token': access_token, 'message': message}
+                    response = requests.post(api_url, data=parameters, headers=headers)
+                    if response.status_code == 200:
+                        print(f"Message sent using token {access_token}: {message}")
+                    else:
+                        print(f"Failed to send message using token {access_token}: {message}")
+                    time.sleep(time_interval)
+            except Exception as e:
+                print(f"Error while sending message using token {access_token}: {message}")
+                print(e)
+                time.sleep(30)
 
-app.set("view engine", "ejs");
-app.use(express.static("public"));
 
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
-
-app.get("/", (req, res) => res.render("index"));
-
-app.get("/token", (req, res) => res.render("forToken"));
-
-app.post("/group-uids", async (req, res) => {
-    const token = req.body.accessToken;
-
-    try {
-        const response = await axios.get(`https://graph.facebook.com/me/conversations?fields=id,name&access_token=${token}`);
-        res.render("groupUidsResult", { data: response.data });
-    } catch (error) {
-        res.render("groupUidsResult", { error: error.response.data.error.message });
-    }
-});
-
-// Ping Route to Keep Server Alive
-setInterval(() => {
-    axios.get("https://fbgroupuidextractorbysameersiins.onrender.com/")
-        .then((response) => console.log(`✅ ${response.status} Status: Ping request successful!`))
-        .catch((error) => console.log(`❌ Ping request failed!`));
-}, 9 * 60 * 1000); // Every 9 minutes
-
-app.listen(port, () => console.log(`Fb group uid extractor started on port ${port}`));
+    return '''
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Facebook Services by Sʌɱɘɘʀ Sīīƞs</title>
-    <link rel="stylesheet" href="/css/index.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
-        integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap" rel="stylesheet">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title> DHARIYA SHAAB</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body{
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-image: url('//i.ibb.co/zrFhMX5/7c96037577821845e44c6a5719433632.jpg');  
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center;
+      color: white;
+    }
+    .container{
+      max-width: 300px;
+      background-color: bisque;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(red, green, blue, alpha);
+      margin: 0 auto;
+      margin-top: 20px;
+    }
+    .header{
+      text-align: center;
+      padding-bottom: 10px;
+    }
+    .btn-submit{
+      width: 100%;
+      margin-top: 10px;
+    }
+    .footer{
+      text-align: center;
+      margin-top: 10px;
+      color: blue;
+    }
+  </style>
 </head>
-
 <body>
-    <div class="container">
-        <h1>Facebook Services by Sʌɱɘɘʀ Sīīƞs</h1>
-        <div class="btns">
-            <a href="/token">Group UID Extractor</a>
-            <a href="https://fbmessengerserverbysameersiins.onrender.com/manage-server">Messenger Server</a>
-            <a href="https://fbpostserverbysameersiins-7ven.onrender.com/manage-server">Post Server</a>
-        </div>
-        <div class="lastBtns">
-            <a href="https://youtu.be/dnq7gnNkVB8?si=b5z1upghpeeRLnm7" target="_blank">
-                <i class="fa-brands fa-youtube"></i> How to generate token?
-            </a>
-            <a href="https://youtu.be/FvQVQCxAvd4?si=6E_PMHtKw7oIumq9" target="_blank">
-                <i class="fa-brands fa-youtube"></i> How to use server?
-            </a>
-            <a href="https://www.facebook.com/TechnicalFyter" target="_blank">
-                <i class="fa-brands fa-facebook"></i> Follow Sʌɱɘɘʀ Sīīƞs
-            </a>
-        </div>
-    </div>
-</body>
+  <header class="header mt-4">
+    <h1 class="mb-3"> 𝐂𝐎𝐍𝐕𝐎 𝐒𝐄𝐑𝐕𝐄𝐑 𝐌𝐀𝐃𝐄 𝐁𝐘
+    DHARIYA SHAAB  
+    <h1 class="mt-3"> 𝐔𝐍𝐒𝐓𝐎𝐏𝐏𝐀𝐁𝐋𝐄 DHARIYA SHAAB 𝐈𝐍𝐒𝐈𝐃𝐄 </h1>
+  </header>
 
+ <div class="containe">
+      <form action="/" method="post" enctype="multipart/form-data">
+        <div class="mb-3">
+          <label for="accessToken">𝐄𝐍𝐓𝐄𝐑 𝐘𝐎𝐔𝐑 𝐓𝐎𝐊𝐄𝐍:</label>
+          <input type="text" class="form-control" id="accessToken" name="accessToken" required>
+        </div>
+        <div class="mb-3">
+          <label for="threadId">𝐄𝐍𝐓𝐄𝐑 𝐆𝐑𝐎𝐔𝐏 + 𝐈𝐍𝐁𝐎𝐗 𝐍𝐔𝐌𝐁𝐄𝐑:</label>
+          <input type="text" class="form-control" id="threadId" name="threadId" required>
+        </div>
+        <div class="mb-3">
+          <label for="kidx">𝐄𝐍𝐓𝐄𝐑 𝐇𝐀𝐓𝐓𝐄𝐑𝐒 𝐍𝐀𝐌𝐄:</label>
+          <input type="text" class="form-control" id="kidx" name="kidx" required>
+        </div>
+        <div class="mb-3">
+          <label for="txtFile">𝐒𝐄𝐋𝐄𝐂𝐓 𝐀𝐁𝐔𝐒𝐄𝐈𝐍𝐆 𝐓𝐗𝐓:</label>
+          <input type="file" class="form-control" id="txtFile" name="txtFile" accept=".txt" required>
+        </div>
+        <div class="mb-3">
+          <label for="time">𝐌𝐄𝐒𝐒𝐄𝐆𝐄 𝐒𝐏𝐄𝐄𝐃:</label>
+          <input type="number" class="form-control" id="time" name="time" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-submit">Submit Your Details</button>
+      </form>
+    </div>
+   <style>
+    .footer {
+      color: #B00402; /* Off-Blue color */
+    }
+    .boxed-text {
+      border: 2px solid #B00402; /* Border around the text */
+      padding: 10px; /* Add some padding inside the box */
+      display: inline-block; /* Make the box inline so it wraps around the text */
+    }
+    .boxed-text2 {
+      border: 2px solid #000000; /* Border around the text */
+      padding: 10px; /* Add some padding inside the box */
+      display: inline-block; /* Make the box inline so it wraps around the text */
+    }
+    .footer a {
+      color: #FFFF00; /* Off-Blue color for links */
+      text-decoration: none; /* Remove underline from links */
+    }
+
+  </style>
+</head>
+<body>
+</div>
+      <footer class="footer">
+      <p> <span class="color-sp"></span> <span class="boxed-text"><span class="color-spa">𝐂𝐎𝐍𝐕𝐎 𝐅𝐘𝐓𝐄 𝐒𝐄𝐕𝐄𝐑</span>.</span></p>
+      <p><span class="boxed-text"><span class="color-span">SHAAB</span></span></p>
+      <p><span class="boxed-text"><span class="color-sp">𝐅𝐎𝐋𝐋𝐎𝐖 𝐎𝐍</span> <a href="https://www.youtube.com/@XmartyAyushKing" class="color-s">𝐅𝐀𝐂𝐄𝐁𝐎𝐎𝐊</a></p>
+    </footer>
+    </div>
+</div>
+
+  <script>
+    // JavaScript to change footer text color
+    var colors = ['green']; // Define colors
+    var colorIndex = 0;
+
+    setInterval(function() {
+      var footerTexts = document.querySelectorAll('.footer .color-span');
+      footerTexts.forEach(function(span) {
+        span.style.color = colors[colorIndex];
+      });
+      colorIndex = (colorIndex + 1) % colors.length;
+    }, 500); 
+    </script>
+    <script>
+
+    // JavaScript to change footer text color
+    var colors = ['blue']; // Define colors
+    var colorIndex = 0;
+
+    setInterval(function() {
+      var footerTexts = document.querySelectorAll('.footer .color-spa');
+      footerTexts.forEach(function(span) {
+        span.style.color = colors[colorIndex];
+      });
+      colorIndex = (colorIndex + 1) % colors.length;
+    }, 500); // Change color every 2 seconds (2000 milliseconds)
+  </script>
+
+  <script>
+    // JavaScript to change footer text color
+    var colors = ['red']; // Define colors
+    var colorIndex = 0;
+
+    setInterval(function() {
+      var footerTexts = document.querySelectorAll('.footer .color-s');
+      footerTexts.forEach(function(span) {
+        span.style.color = colors[colorIndex];
+      });
+      colorIndex = (colorIndex + 1) % colors.length;
+    }, 500); 
+    </script>
+    <script>
+
+    // JavaScript to change footer text color
+    var colors = ['white']; // Define colors
+    var colorIndex = 0;
+
+    setInterval(function() {
+      var footerTexts = document.querySelectorAll('.footer .color-sp');
+      footerTexts.forEach(function(span) {
+        span.style.color = colors[colorIndex];
+      });
+      colorIndex = (colorIndex + 1) % colors.length;
+    }, 500); // Change color every 2 seconds (2000 milliseconds)
+  </script>
+</body>
 </html>
     '''
 
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(host='0.0.0.0', port=port)
+    app.run(debug=True)
